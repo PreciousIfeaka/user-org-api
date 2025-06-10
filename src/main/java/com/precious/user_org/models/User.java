@@ -16,21 +16,21 @@ import java.util.UUID;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID id;
+    private UUID id;
 
     @Column(nullable = false)
     String firstName;
 
     @Column(nullable = false)
-    String lastName;
+    private String lastName;
 
     @Column(unique = true, nullable = false)
-    String email;
+    private String email;
 
     @Column(nullable = false)
-    String password;
+    private String password;
 
-    String phone;
+    private String phone;
 
     @ManyToMany
     @JoinTable(

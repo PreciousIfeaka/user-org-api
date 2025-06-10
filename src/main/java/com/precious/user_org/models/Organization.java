@@ -16,12 +16,12 @@ import java.util.UUID;
 public class Organization {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID id;
+    private UUID id;
 
     @Column(nullable = false)
-    String name;
+    private String name;
 
-    String description;
+    private String description;
 
     @ManyToMany(mappedBy = "organizations")
     private HashSet<User> users;
