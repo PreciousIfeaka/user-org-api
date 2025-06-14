@@ -1,7 +1,6 @@
 package com.precious.user_org.repositories;
 
 import com.precious.user_org.models.Organization;
-import com.precious.user_org.models.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

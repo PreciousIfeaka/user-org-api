@@ -5,7 +5,6 @@ import com.precious.user_org.dto.auth.AuthResponseDto;
 import com.precious.user_org.dto.auth.LoginRequestDto;
 import com.precious.user_org.dto.auth.RegisterRequestDto;
 import com.precious.user_org.services.AuthService;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

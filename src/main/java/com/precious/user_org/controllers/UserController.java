@@ -3,7 +3,6 @@ package com.precious.user_org.controllers;
 import com.precious.user_org.dto.BaseResponseDto;
 import com.precious.user_org.dto.user.UserPagedResponseDto;
 import com.precious.user_org.dto.user.UserResponseDto;
-import com.precious.user_org.models.User;
 import com.precious.user_org.services.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
