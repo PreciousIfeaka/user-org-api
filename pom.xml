@@ -102,9 +102,10 @@
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
 							<version>1.18.32</version>
-							<scope>provided</scope>
 						</path>
 					</annotationProcessorPaths>
+					<source>17</source>
+					<target>17</target>
 				</configuration>
 			</plugin>
 			<plugin>
