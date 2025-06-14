@@ -26,17 +26,11 @@ public class UserController {
     public ResponseEntity<BaseResponseDto<UserResponseDto>> getUser(
             @PathVariable UUID id
             ) {
-        User user = this.userService.getUser(id);
+        UserResponseDto user = this.userService.getUser(id);
         BaseResponseDto<UserResponseDto> response = new BaseResponseDto<>(
                 "success",
                 "Successfully retrieved user",
-                UserResponseDto.builder()
-                        .userId(user.getId())
-                        .firstName(user.getFirstName())
-                        .lastName(user.getLastName())
-                        .email(user.getEmail())
-                        .phone(user.getPhone())
-                        .build()
+                user
         );
 
         return ResponseEntity.ok(response);
@@ -47,12 +41,12 @@ public class UserController {
             @RequestParam(required = false, defaultValue = "0") Integer page,
             @RequestParam(required = false, defaultValue = "10") Integer limit
     ) {
-        Page<User> users = this.userService.getAllUsers(page, limit);
+        Page<UserResponseDto> users = this.userService.getAllUsers(page, limit);
 
         BaseResponseDto<UserPagedResponseDto> response = new BaseResponseDto<>(
                 "success",
                 "Successfully retrieved all users",
-                new UserPagedResponseDto(users.map(UserResponseDto::fromEntity))
+                new UserPagedResponseDto(users)
         );
 
         return ResponseEntity.ok(response);

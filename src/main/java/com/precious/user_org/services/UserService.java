@@ -1,6 +1,7 @@
 package com.precious.user_org.services;
 
 import com.precious.user_org.dto.auth.RegisterRequestDto;
+import com.precious.user_org.dto.user.UserResponseDto;
 import com.precious.user_org.exceptions.ResourceNotFoundException;
 import com.precious.user_org.exceptions.UnauthorizedException;
 import com.precious.user_org.models.Organization;
@@ -30,7 +31,7 @@ public class UserService {
     private final OrganizationRepository organizationRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public User createUser(RegisterRequestDto registerRequestDto) {
+    public UserResponseDto createUser(RegisterRequestDto registerRequestDto) {
         User newUser = new User();
 
         newUser.setFirstName(registerRequestDto.getFirstName());
@@ -52,7 +53,7 @@ public class UserService {
         savedUser.getOrganizations().add(savedOrganization);
         savedOrganization.getUsers().add(savedUser);
 
-        return this.userRepository.save(savedUser);
+        return UserResponseDto.fromEntity(this.userRepository.save(savedUser));
     }
 
     private boolean isUserInOrgs(List<Organization> orgs, UUID userId) {
@@ -62,9 +63,9 @@ public class UserService {
                                 .anyMatch(user -> userId.equals(user.getId())));
     }
 
-    public User getUser(Object identifier) {
+    public UserResponseDto getUser(Object identifier) {
         User authUser = this.getAuthenticatedUser();
-        List<Organization> myOrgs = this.organizationRepository.findByCreatedBy(authUser);
+        List<Organization> myOrgs = this.organizationRepository.findByCreatedBy_Id(authUser.getId());
 
         User user;
         if (identifier instanceof String email && email.contains("@")) {
@@ -73,7 +74,7 @@ public class UserService {
             if (!isUserInOrgs(myOrgs, user.getId())) {
                 throw new UnauthorizedException("Unauthorized");
             }
-            return user;
+            return UserResponseDto.fromEntity(user);
         } else if (identifier instanceof UUID id) {
             user = this.userRepository.findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -81,17 +82,18 @@ public class UserService {
             if (!isUserInOrgs(myOrgs, user.getId())) {
                 throw new UnauthorizedException("Unauthorized");
             }
-            return user;
+            return UserResponseDto.fromEntity(user);
         }
         throw new IllegalArgumentException("Unsupported identifier type: " + identifier.getClass());
     }
 
-    public Page<User> getAllUsers(int page, int size) {
+    public Page<UserResponseDto> getAllUsers(int page, int size) {
         User authUser = this.getAuthenticatedUser();
-        List<Organization> myOrgs = organizationRepository.findByCreatedBy(authUser);
+        List<Organization> myOrgs = organizationRepository.findByCreatedBy_Id(authUser.getId());
 
         List<User> allUsersInMyOrgs = myOrgs.stream()
                 .flatMap(org -> org.getUsers().stream())
+                .distinct()
                 .toList();
 
         int totalUsers = allUsersInMyOrgs.size();
@@ -102,7 +104,8 @@ public class UserService {
         }
 
         int toIndex = Math.min(fromIndex + size, totalUsers);
-        List<User> pagedUsers = allUsersInMyOrgs.subList(fromIndex, toIndex);
+        List<UserResponseDto> pagedUsers = allUsersInMyOrgs
+                .stream().map(UserResponseDto::fromEntity).toList().subList(fromIndex, toIndex);
 
         return new PageImpl<>(pagedUsers, PageRequest.of(page, size), totalUsers);
     }
@@ -112,7 +115,8 @@ public class UserService {
 
         if (authentication != null && authentication.isAuthenticated()) {
             String username = authentication.getName();
-            return this.getUser(username);
+            return this.userRepository.findByEmail(username)
+                    .orElseThrow(() -> new ResourceNotFoundException("Unauthorized user"));
         }
         return null;
     }

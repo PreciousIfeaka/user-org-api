@@ -106,6 +106,8 @@ public class GlobalExceptionHandler {
             message = "Email already exists.";
         }
 
+        System.out.println(e);
+
         ExceptionResponseDto errorResponse = ExceptionResponseDto.builder()
                 .status("Internal Server Error")
                 .message(message)

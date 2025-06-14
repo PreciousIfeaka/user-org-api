@@ -6,7 +6,9 @@ import com.precious.user_org.dto.auth.RegisterRequestDto;
 import com.precious.user_org.dto.auth.AuthResponseDto;
 import com.precious.user_org.dto.user.UserResponseDto;
 import com.precious.user_org.exceptions.BadRequestException;
+import com.precious.user_org.exceptions.ResourceNotFoundException;
 import com.precious.user_org.models.User;
+import com.precious.user_org.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,22 +23,19 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public class AuthService {
     private final UserService userService;
+    private final UserRepository userRepository;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
     public AuthResponseDto registerUser(RegisterRequestDto dto) {
-        User createdUser = this.userService.createUser(dto);
+        UserResponseDto createdUser = this.userService.createUser(dto);
+        User user = this.userRepository.findById(createdUser.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
 
-        String accessToken = this.jwtService.generateJwt(createdUser);
+        String accessToken = this.jwtService.generateJwt(user);
 
-        UserResponseDto userResponse = new UserResponseDto(
-                createdUser.getId(),
-                createdUser.getFirstName(),
-                createdUser.getLastName(),
-                createdUser.getEmail(),
-                createdUser.getPhone()
-        );
+        UserResponseDto userResponse = UserResponseDto.fromEntity(user);
 
         return new AuthResponseDto(userResponse, accessToken);
     }
@@ -53,16 +52,12 @@ public class AuthService {
             throw new BadRequestException("Invalid email or password");
         }
 
-        User user = this.userService.getUser(dto.getEmail().toLowerCase());
+        User user = this.userRepository.findByEmail(dto.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid email or password"));
+
         String authToken = this.jwtService.generateJwt(user);
 
-        UserResponseDto userResponse = new UserResponseDto(
-                user.getId(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getEmail(),
-                user.getPhone()
-        );
+        UserResponseDto userResponse = UserResponseDto.fromEntity(user);
 
         return new AuthResponseDto(userResponse, authToken);
     }

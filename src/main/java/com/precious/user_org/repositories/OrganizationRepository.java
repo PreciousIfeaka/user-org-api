@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface OrganizationRepository extends JpaRepository<Organization, UUID> {
-    List<Organization> findByCreatedBy(User createdBy);
+    List<Organization> findByCreatedBy_Id(UUID createdById);
 
     @Query("SELECT o FROM Organization o JOIN o.users u WHERE u.id = :userId")
     Page<Organization> findByUserMember(@Param("userId") UUID userId, Pageable pageable);

@@ -2,6 +2,7 @@ package com.precious.user_org.services;
 
 import com.precious.user_org.dto.organization.CreateOrganizationRequestDto;
 import com.precious.user_org.dto.organization.OrganizationResponseDto;
+import com.precious.user_org.dto.user.UserResponseDto;
 import com.precious.user_org.exceptions.BadRequestException;
 import com.precious.user_org.exceptions.ForbiddenException;
 import com.precious.user_org.exceptions.ResourceNotFoundException;
@@ -91,16 +92,21 @@ public class OrganizationService {
         Organization org = this.organizationRepository.findById(orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
 
-        User user = this.userService.getUser(userId);
-
-        List<Organization> myOrgs = this.organizationRepository.findByCreatedBy(authenticatedUser);
+        List<Organization> myOrgs = this.organizationRepository.findByCreatedBy_Id(authenticatedUser.getId());
 
         if (!myOrgs.contains(org)) {
             throw new ForbiddenException("Unauthorized access to add user to this org");
         }
-        else if (org.getUsers().contains(user)) {
+        else if (
+                org.getUsers().stream().map(UserResponseDto::fromEntity)
+                        .distinct().toList()
+                        .contains(this.userService.getUser(userId))
+        ) {
             throw new BadRequestException("User is already a member of this organization");
         }
+
+        User user = this.userRepository.findById(userId)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         org.getUsers().add(user);
         user.getOrganizations().add(org);
