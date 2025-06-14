@@ -30,11 +30,10 @@ import java.util.UUID;
 public class OrganizationService {
     private final OrganizationRepository organizationRepository;
     private final UserService userService;
-    private final AuthService authService;
     private final UserRepository userRepository;
 
     public OrganizationResponseDto createOrganization(CreateOrganizationRequestDto dto) {
-        User authenticatedUser = this.authService.getAuthenticatedUser();
+        User authenticatedUser = this.userService.getAuthenticatedUser();
 
         Organization newOrg = Organization.builder()
                 .name(dto.getName())
@@ -58,7 +57,7 @@ public class OrganizationService {
     }
 
     public OrganizationResponseDto getOrganizationById(UUID id) {
-        User authenticatedUser = this.authService.getAuthenticatedUser();
+        User authenticatedUser = this.userService.getAuthenticatedUser();
 
 
         Organization org = this.organizationRepository.findById(id)
@@ -76,7 +75,7 @@ public class OrganizationService {
     }
 
     public Page<OrganizationResponseDto> getAllOrganizations(int page, int size) {
-        User authenticatedUser = this.authService.getAuthenticatedUser();
+        User authenticatedUser = this.userService.getAuthenticatedUser();
 
         Page<Organization> orgs = this.organizationRepository.findByUserMember(
                 authenticatedUser.getId(),
@@ -87,7 +86,7 @@ public class OrganizationService {
     }
 
     public void addUserToOrganization(UUID userId, UUID orgId) throws BadRequestException {
-        User authenticatedUser = this.authService.getAuthenticatedUser();
+        User authenticatedUser = this.userService.getAuthenticatedUser();
 
         Organization org = this.organizationRepository.findById(orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));

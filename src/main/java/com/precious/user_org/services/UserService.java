@@ -2,6 +2,7 @@ package com.precious.user_org.services;
 
 import com.precious.user_org.dto.auth.RegisterRequestDto;
 import com.precious.user_org.exceptions.ResourceNotFoundException;
+import com.precious.user_org.exceptions.UnauthorizedException;
 import com.precious.user_org.models.Organization;
 import com.precious.user_org.models.Role;
 import com.precious.user_org.models.User;
@@ -10,14 +11,15 @@ import com.precious.user_org.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import java.util.HashSet;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -53,18 +55,65 @@ public class UserService {
         return this.userRepository.save(savedUser);
     }
 
+    private boolean isUserInOrgs(List<Organization> orgs, UUID userId) {
+        return orgs.stream()
+                .anyMatch(org -> org.getUsers() != null &&
+                        org.getUsers().stream()
+                                .anyMatch(user -> userId.equals(user.getId())));
+    }
+
     public User getUser(Object identifier) {
+        User authUser = this.getAuthenticatedUser();
+        List<Organization> myOrgs = this.organizationRepository.findByCreatedBy(authUser);
+
+        User user;
         if (identifier instanceof String email && email.contains("@")) {
-            return this.userRepository.findByEmail(email.toLowerCase())
+            user = this.userRepository.findByEmail(email.toLowerCase())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            if (!isUserInOrgs(myOrgs, user.getId())) {
+                throw new UnauthorizedException("Unauthorized");
+            }
+            return user;
         } else if (identifier instanceof UUID id) {
-            return this.userRepository.findById(id)
+            user = this.userRepository.findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            if (!isUserInOrgs(myOrgs, user.getId())) {
+                throw new UnauthorizedException("Unauthorized");
+            }
+            return user;
         }
         throw new IllegalArgumentException("Unsupported identifier type: " + identifier.getClass());
     }
 
     public Page<User> getAllUsers(int page, int size) {
-        return this.userRepository.findAll(PageRequest.of(page, size));
+        User authUser = this.getAuthenticatedUser();
+        List<Organization> myOrgs = organizationRepository.findByCreatedBy(authUser);
+
+        List<User> allUsersInMyOrgs = myOrgs.stream()
+                .flatMap(org -> org.getUsers().stream())
+                .toList();
+
+        int totalUsers = allUsersInMyOrgs.size();
+        int fromIndex = page * size;
+
+        if (fromIndex >= totalUsers) {
+            return Page.empty(PageRequest.of(page, size));
+        }
+
+        int toIndex = Math.min(fromIndex + size, totalUsers);
+        List<User> pagedUsers = allUsersInMyOrgs.subList(fromIndex, toIndex);
+
+        return new PageImpl<>(pagedUsers, PageRequest.of(page, size), totalUsers);
+    }
+
+    protected User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            String username = authentication.getName();
+            return this.getUser(username);
+        }
+        return null;
     }
 }

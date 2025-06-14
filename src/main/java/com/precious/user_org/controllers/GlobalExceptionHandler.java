@@ -5,6 +5,7 @@ import com.precious.user_org.dto.error.ValidationErrorDto;
 import com.precious.user_org.exceptions.BadRequestException;
 import com.precious.user_org.exceptions.ForbiddenException;
 import com.precious.user_org.exceptions.ResourceNotFoundException;
+import com.precious.user_org.exceptions.UnauthorizedException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +44,19 @@ public class GlobalExceptionHandler {
         errorResponse.put("errors", errorList);
 
         return ResponseEntity.status(422).body(errorResponse);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ExceptionResponseDto> handleUnauthorizedException(
+            UnauthorizedException e
+    ) {
+        ExceptionResponseDto errorResponse = ExceptionResponseDto.builder()
+                .status("Unauthorized")
+                .message(e.getMessage())
+                .statusCode(401)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 
     @ExceptionHandler(BadRequestException.class)
