@@ -1,18 +1,21 @@
 package com.precious.user_org.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
+@EqualsAndHashCode(exclude = {"users"})
+@Builder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "users")
+@Table(name = "organization")
 public class Organization {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -23,6 +26,12 @@ public class Organization {
 
     private String description;
 
+    @ManyToOne
+    @JoinColumn(name = "created_by_id", referencedColumnName = "id")
+    @JsonIgnore
+    private User createdBy;
+
     @ManyToMany(mappedBy = "organizations")
-    private HashSet<User> users;
+    @JsonBackReference("user-organizations")
+    private Set<User> users = new HashSet<>();
 }
