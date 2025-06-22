@@ -72,7 +72,7 @@ public class UserService {
             user = this.userRepository.findByEmail(email.toLowerCase())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
             if (!isUserInOrgs(myOrgs, user.getId())) {
-                throw new UnauthorizedException("Unauthorized");
+                throw new UnauthorizedException("User is not a member of your orgs");
             }
             return UserResponseDto.fromEntity(user);
         } else if (identifier instanceof UUID id) {
@@ -80,7 +80,7 @@ public class UserService {
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
             if (!isUserInOrgs(myOrgs, user.getId())) {
-                throw new UnauthorizedException("Unauthorized");
+                throw new UnauthorizedException("User is not a member of your orgs");
             }
             return UserResponseDto.fromEntity(user);
         }

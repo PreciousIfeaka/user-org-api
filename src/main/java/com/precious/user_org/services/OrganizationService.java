@@ -94,19 +94,23 @@ public class OrganizationService {
 
         List<Organization> myOrgs = this.organizationRepository.findByCreatedBy_Id(authenticatedUser.getId());
 
+        UserResponseDto newOrgMember = UserResponseDto.fromEntity(this.userRepository.findById(userId)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found")));
+
         if (!myOrgs.contains(org)) {
             throw new ForbiddenException("Unauthorized access to add user to this org");
         }
         else if (
                 org.getUsers().stream().map(UserResponseDto::fromEntity)
                         .distinct().toList()
-                        .contains(this.userService.getUser(userId))
+                        .contains(newOrgMember)
         ) {
             throw new BadRequestException("User is already a member of this organization");
         }
 
         User user = this.userRepository.findById(userId)
                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
 
         org.getUsers().add(user);
         user.getOrganizations().add(org);
